@@ -25,8 +25,8 @@ struct Packet {
         
         let header = buffer.readNext(need: 4)
         let pktLen = Int(header.uInt24())
-        
-        guard pktLen > 0 else {
+
+        guard pktLen > 0 && pktLen == buffer.length else {
             throw Err.ErrInvalidConn
         }
         
@@ -35,5 +35,11 @@ struct Packet {
         self.payloadLength = pktLen
         self.sequenceID = Int(header[3])
         self.payload = bytes
+    }
+}
+
+extension Packet {
+    public func handshake() throws -> Handshake {
+        return try Handshake(payload: payload)
     }
 }

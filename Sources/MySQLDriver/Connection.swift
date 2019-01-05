@@ -28,7 +28,7 @@ class Connection {
             }
             
             let packet = try Packet(data: data)
-            let handshake = try Handshake(payload: packet.payload)
+            let handshake = try packet.handshake()
             print(handshake)
         } catch {
             print(error)

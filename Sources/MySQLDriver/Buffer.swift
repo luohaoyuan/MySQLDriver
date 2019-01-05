@@ -15,8 +15,8 @@ class Buffer {
     
     var bytes: Bytes
     
-    var index: Int = 0
-    var length: Int
+    private(set) var index: Int = 0
+    private(set) var length: Int
     
     init(bytes: Bytes) {
         self.bytes = bytes
@@ -47,7 +47,7 @@ class Buffer {
             index += 1
             length -= 1
             
-            if byte == 0x00 {
+            if byte == iOK {
                 break
             }
             result.append(byte)

@@ -9,6 +9,7 @@ import Foundation
 
 enum Err: Error {
     case ErrInvalidConn
+    case ErrOldProtocol
     case ErrInvalidProtoVersion
     case ErrInvalidHandshake
 }
