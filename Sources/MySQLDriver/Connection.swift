@@ -21,12 +21,15 @@ class Connection {
             let socket = try Socket.create()
             try socket.connect(to: config.address, port: config.port)
             
-//            let packet = try Packet.readPacket(socket: socket)
+            var data = Data()
+            let len = try socket.read(into: &data)
+            guard len > 0 else {
+                return
+            }
             
-//            let packet = try stream.readHandshakePacket()
-//            print(packet.handshake.authData)
-//            print(packet.packnr)
-            
+            let packet = try Packet(data: data)
+            let handshake = try Handshake(payload: packet.payload)
+            print(handshake)
         } catch {
             print(error)
         }

@@ -41,14 +41,14 @@ struct Handshake {
     
     init(payload: Bytes) throws {
         let buffer = Buffer(bytes: payload)
-    
+        
         let protoV = buffer.readNextByte()
         guard protoV >= minProtocolVersion else {
             throw Err.ErrInvalidProtoVersion
         }
         self.protocolVersion = protoV
         
-        self.serverVersion = String(cString: UnsafePointer<Byte>(buffer.readNextNullTerminatedString()))
+        self.serverVersion = buffer.readNextNullTerminatedBytes().string()
         
         let threadIDBuf = buffer.readNext(need: 4)
         self.threadID = threadIDBuf.uInt32()
@@ -62,7 +62,7 @@ struct Handshake {
         self.capabilityFlagsLow = capFlagsLowBuf.uInt16()
         
         self.characterSet = Int(buffer.readNextByte())
-        
+
         let serverStatusBuf = buffer.readNext(need: 2)
         self.statusFlags = Int(UInt32(serverStatusBuf[0]) | UInt32(serverStatusBuf[1]))
         
@@ -72,8 +72,8 @@ struct Handshake {
         _ = buffer.readNextByte()
         _ = buffer.readNext(need: 10)
         
-        self.scramble2 = buffer.readNextNullTerminatedString()
-        
-        self.plugin = String(cString: UnsafePointer<Byte>(buffer.readNextNullTerminatedString()))
+        self.scramble2 = buffer.readNextNullTerminatedBytes()
+
+        self.plugin = buffer.readNextNullTerminatedBytes().string()
     }
 }

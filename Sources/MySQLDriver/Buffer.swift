@@ -39,20 +39,20 @@ class Buffer {
         return readNext(need: 1)[0]
     }
     
-    public func readNextNullTerminatedString() -> Bytes {
+    public func readNextNullTerminatedBytes() -> Bytes {
         var result = Bytes()
         
         while index < bytes.count {
             let byte = bytes[index]
+            index += 1
+            length -= 1
+            
             if byte == 0x00 {
                 break
             }
-            
             result.append(byte)
-            index += 1
-            length -= 1
         }
-        
+
         return result
     }
 }
@@ -60,11 +60,11 @@ class Buffer {
 extension Sequence where Iterator.Element == Byte {
     func string() -> String {
         let arr = self.map { $0 }
-        guard (arr.count > 0) && (arr[arr.count-1] == 0) else {
+        guard let str = String(bytes: arr, encoding: .utf8) else {
             return ""
         }
         
-        return String(cString: UnsafePointer<UInt8>(arr))
+        return str
     }
     
     func uInt16() -> UInt16 {

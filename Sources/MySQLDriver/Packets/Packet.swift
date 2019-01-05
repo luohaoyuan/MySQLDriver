@@ -24,11 +24,7 @@ struct Packet {
         let buffer = Buffer(data: data)
         
         let header = buffer.readNext(need: 4)
-        
-        let u1 = UInt32(header[0])
-        let u2 = UInt32(header[1]) << 8
-        let u3 = UInt32(header[2]) << 16
-        let pktLen = Int(u1 | u2 | u3)
+        let pktLen = Int(header.uInt24())
         
         guard pktLen > 0 else {
             throw Err.ErrInvalidConn
@@ -40,34 +36,4 @@ struct Packet {
         self.sequenceID = Int(header[3])
         self.payload = bytes
     }
-    
-//    static func read(socket: Socket) throws -> Packet {
-//        var data = Data()
-//        let result = try socket.read(into: &data)
-//
-//        guard result > 0 else {
-//            throw Err.ErrInvalidConn
-//        }
-//
-//        let buffer = Buffer(data: data)
-//        let packet = try Packet(buffer: buffer)
-//
-//        return packet
-//    }
 }
-
-//extension Stream {
-//    func readHandshakePacket() throws -> (handshake: Handshake, packnr: Packnr) {
-//        let data = try readPacket()
-//
-//        let handshake = Handshake(bytes: data.bytes)
-//        if handshake.protoVersion == iERR {
-//            // TODO
-//        }
-//        if handshake.protoVersion < minProtocolVersion {
-//            // TODO
-//        }
-//
-//        return (handshake, data.packnr)
-//    }
-//}
