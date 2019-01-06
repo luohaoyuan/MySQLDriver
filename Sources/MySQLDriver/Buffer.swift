@@ -95,6 +95,16 @@ extension Array where Iterator.Element == Byte {
         }
     }
     
+    static func uInt24Array(_ val: UInt32) -> Bytes {
+        var bytes = Bytes(repeating: 0, count: 3)
+        
+        for i in 0...2 {
+            bytes[i] = Byte(0x0000FF & val >> UInt32((i) * 8))
+        }
+        
+        return bytes
+    }
+    
     static func uInt32Array(_ val: UInt32) -> Bytes {
         var bytes = Bytes(repeating:0, count: 4)
         

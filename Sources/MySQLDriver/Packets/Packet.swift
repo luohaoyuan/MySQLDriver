@@ -20,6 +20,12 @@ struct Packet {
     /// payload of the packet
     let payload: Bytes
     
+    init(pktLen: Int, sequenceID: Int, payload: Bytes) {
+        self.payloadLength = pktLen
+        self.sequenceID = sequenceID
+        self.payload = payload
+    }
+    
     init(data: Data) throws {
         let buffer = Buffer(data: data)
         
@@ -32,9 +38,19 @@ struct Packet {
         
         let bytes = buffer.readNext(need: pktLen)
         
-        self.payloadLength = pktLen
-        self.sequenceID = Int(header[3])
-        self.payload = bytes
+        self.init(
+            pktLen: pktLen,
+            sequenceID: Int(header[3]),
+            payload: bytes
+        )
+    }
+    
+    public func writeBytes() -> Data {
+        var bytes = payload
+        bytes.insert(Byte(sequenceID), at: 0)
+        let pkt = Bytes.uInt24Array(UInt32(payloadLength))
+        bytes.insert(contentsOf: pkt, at: 0)
+        return Data(bytes)
     }
 }
 

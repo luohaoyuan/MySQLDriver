@@ -30,8 +30,21 @@ class Connection {
             let packet = try Packet(data: data)
             let handshake = try packet.handshake()
             let payload = handshake.authPayload(config: config)
+            let writedPacket = Packet(
+                pktLen: payload.count,
+                sequenceID: packet.sequenceID + 1,
+                payload: payload
+            )
+            try socket.write(from: writedPacket.writeBytes())
             
-            print(payload)
+            var responseData = Data()
+            let resLen = try socket.read(into: &responseData)
+            guard resLen > 0 else {
+                return
+            }
+            let packet2 = try Packet(data: responseData)
+            
+            print(packet2)
         } catch {
             print(error)
         }
