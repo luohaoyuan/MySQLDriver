@@ -24,7 +24,7 @@ struct Handshake {
     
     /// int<2>, the lower 2 bytes of the Capabilities Flags
     /// https://dev.mysql.com/doc/dev/mysql-server/latest/group__group__cs__capabilities__flags.html
-    let flags: UInt16
+    let flags: UInt32
     
     /// int<1>, default server a_protocol_character_set, only the lower 8-bits
     let characterSet: Int
@@ -33,7 +33,7 @@ struct Handshake {
     let status: Int
     
     /// Rest of the plugin provided data (scramble), $len=MAX(13, length of auth-plugin-data - 8)
-    let flagsHigh: UInt16
+    let flagsHigh: UInt32
     
     /// name of the auth_method that the auth_plugin_data belongs to
     let plugin: String
@@ -81,7 +81,81 @@ struct Handshake {
 }
 
 extension Handshake {
-    public func responsePacket(config: Config) -> Bytes {
-        return []
+    public func authPayload(config: Config) -> Bytes {
+        var clientFlags = ClientFlag.protocol41.rawValue |
+            ClientFlag.secureConnection.rawValue |
+            ClientFlag.longPassword.rawValue |
+            ClientFlag.transactions.rawValue |
+            ClientFlag.localFiles.rawValue |
+            ClientFlag.pluginAuth.rawValue |
+            ClientFlag.multiResults.rawValue |
+            flags & ClientFlag.longFlag.rawValue
+   
+        if config.clientFoundRows {
+            clientFlags |= ClientFlag.foundRows.rawValue
+        }
+
+        if config.multiStatements {
+            clientFlags |= ClientFlag.multiStatements.rawValue
+        }
+
+        /// TODO: tls support
+        
+        let authResp = auth(scramble: scramble, password: config.password, plugin: plugin)
+        var authRespLEI = Bytes()
+        authRespLEI.appendLengthEncodedInteger(n: UInt64(authResp.count))
+        if authRespLEI.count > 1 {
+            clientFlags |= ClientFlag.pluginAuthLenEncClientData.rawValue
+        }
+        
+        if config.dbName != nil {
+            clientFlags |= ClientFlag.connectWithDB.rawValue
+        }
+        
+        var bytes = Bytes()
+        
+        // ClientFlags [32 bit]
+        bytes.append(contentsOf: Bytes.uInt32Array(clientFlags))
+        
+        // MaxPacketSize [32 bit] (none)
+        bytes.append(contentsOf: Bytes(repeating: 0x00, count: 4))
+        
+        // Charset [1 byte]
+        bytes.append(config.collation.rawValue)
+        
+        // Filler [23 bytes] (all 0x00)
+        bytes.append(contentsOf: Bytes(repeating: 0, count: 23))
+        
+        // User [null terminated string]
+        bytes.append(contentsOf: config.username.utf8)
+        bytes.append(0)
+
+        // Auth Data [length encoded integer]
+        bytes.append(contentsOf: authRespLEI)
+        bytes.append(contentsOf: authResp)
+
+        // Databasename [null terminated string]
+        if let dbName = config.dbName {
+            bytes.append(contentsOf: dbName.utf8)
+        }
+        bytes.append(0)
+        
+        bytes.append(contentsOf: plugin.utf8)
+        bytes.append(0)
+        
+        return bytes
+    }
+    
+    func auth(scramble: Bytes, password: String?, plugin: String) -> Bytes {
+        guard let password = password else {
+            return []
+        }
+        switch plugin {
+        case defaultAuthPlugin:
+            return scramblePassword(scramble: scramble, password: password)
+        default:
+            // TODO: more plugins support
+            return []
+        }
     }
 }

@@ -8,16 +8,6 @@
 import Foundation
 import CryptoSwift
 
-func auth(authData: Bytes, password: String, plugin: String) -> Bytes {
-    switch plugin {
-    case defaultAuthPlugin:
-        return scramblePassword(scramble: authData, password: password)
-    default:
-        // TODO: more plugins support
-        return []
-    }
-}
-
 func scramblePassword(scramble: Bytes, password: String) -> Bytes {
     guard !password.isEmpty else {
         return []

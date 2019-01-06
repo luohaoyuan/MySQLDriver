@@ -29,7 +29,9 @@ class Connection {
             
             let packet = try Packet(data: data)
             let handshake = try packet.handshake()
-            print(handshake)
+            let payload = handshake.authPayload(config: config)
+            
+            print(payload)
         } catch {
             print(error)
         }

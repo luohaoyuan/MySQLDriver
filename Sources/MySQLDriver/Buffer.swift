@@ -57,34 +57,51 @@ class Buffer {
     }
 }
 
-extension Sequence where Iterator.Element == Byte {
+extension Array where Iterator.Element == Byte {
     func string() -> String {
-        let arr = self.map { $0 }
-        guard let str = String(bytes: arr, encoding: .utf8) else {
+        guard let str = String(bytes: self, encoding: .utf8) else {
             return ""
         }
-        
         return str
     }
     
-    func uInt16() -> UInt16 {
-        let arr = self.map { $0 }
-        return UInt16(arr[1]) << 8 | UInt16(arr[0])
+    func uInt16() -> UInt32 {
+        return UInt32(self[1]) << 8 | UInt32(self[0])
     }
     
     func uInt24() -> UInt32 {
-        let arr = self.map { $0 }
-        return UInt32(arr[2]) << 16 | UInt32(arr[1]) << 8 | UInt32(arr[0])
+        return UInt32(self[2]) << 16 | UInt32(self[1]) << 8 | UInt32(self[0])
     }
     
     func uInt32() -> UInt32 {
-        let arr = self.map { $0 }
-        
-        let u1 = UInt32(arr[0])
-        let u2 = UInt32(arr[1]) << 8
-        let u3 = UInt32(arr[2]) << 16
-        let u4 = UInt32(arr[3]) << 24
+        let u1 = UInt32(self[0])
+        let u2 = UInt32(self[1]) << 8
+        let u3 = UInt32(self[2]) << 16
+        let u4 = UInt32(self[3]) << 24
 
         return u4 | u3 | u2 | u1
+    }
+    
+    mutating func appendLengthEncodedInteger(n: UInt64) {
+        switch n {
+        case n where n <= 250:
+            append(Byte(n))
+        case n where n <= 0xffff:
+            append(contentsOf: [0xfc, Byte(n), Byte(n >> 8)])
+        case n where n <= 0xffffff:
+            append(contentsOf: [0xfd, Byte(n), Byte(n >> 8), Byte(n >> 16)])
+        default:
+            append(contentsOf: [0xfe, Byte(n), Byte(n >> 8), Byte(n >> 16), Byte(n >> 24), Byte(n >> 32), Byte(n >> 40), Byte(n >> 48), Byte(n >> 56)])
+        }
+    }
+    
+    static func uInt32Array(_ val: UInt32) -> Bytes {
+        var bytes = Bytes(repeating:0, count: 4)
+        
+        for i in 0...3 {
+            bytes[i] = Byte(0x0000FF & val >> UInt32((i) * 8))
+        }
+        
+        return bytes
     }
 }
