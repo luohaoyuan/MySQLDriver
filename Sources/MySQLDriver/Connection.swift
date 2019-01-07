@@ -10,7 +10,6 @@ import Socket
 
 class Connection {
     let config: Config
-    let sequence: Byte = 0
     
     init(config: Config) {
         self.config = config
@@ -18,33 +17,16 @@ class Connection {
     
     func connect() throws {
         do {
-            let socket = try Socket.create()
-            try socket.connect(to: config.address, port: config.port)
+            let stream = try Stream.init(address: config.address, port: config.port)
             
-            var data = Data()
-            let len = try socket.read(into: &data)
-            guard len > 0 else {
-                return
-            }
+            let handshake = try stream.read().handshake()
+            let authPayload = handshake.authPayload(config: config)
             
-            let packet = try Packet(data: data)
-            let handshake = try packet.handshake()
-            let payload = handshake.authPayload(config: config)
-            let writedPacket = Packet(
-                pktLen: payload.count,
-                sequenceID: packet.sequenceID + 1,
-                payload: payload
-            )
-            try socket.write(from: writedPacket.writeBytes())
+            try stream.write(payload: authPayload)
             
-            var responseData = Data()
-            let resLen = try socket.read(into: &responseData)
-            guard resLen > 0 else {
-                return
-            }
-            let packet2 = try Packet(data: responseData)
+            let authRes = try stream.read()
             
-            print(packet2)
+            print(authRes)
         } catch {
             print(error)
         }
