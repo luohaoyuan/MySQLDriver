@@ -17,16 +17,24 @@ class Connection {
     
     func connect() throws {
         do {
-            let stream = try Stream.init(address: config.address, port: config.port)
+            let stream = try Stream(address: config.address, port: config.port)
             
             let handshake = try stream.read().handshake()
             let authPayload = handshake.authPayload(config: config)
             
             try stream.write(payload: authPayload)
             
-            let authRes = try stream.read()
+            let authResPayload = try stream.read().payload
             
-            print(authRes)
+            switch authResPayload[0] {
+            case ResultHeader.ok.rawValue:
+                let okPacketBytes =  Bytes(authResPayload[0..<authResPayload.count])
+                let okPacket = OKPacket(bytes: okPacketBytes)
+                print(okPacket)
+            default:
+                break
+            }
+            
         } catch {
             print(error)
         }

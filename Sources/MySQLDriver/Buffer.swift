@@ -9,7 +9,7 @@ import Foundation
 import Socket
 
 typealias Byte = UInt8
-typealias Bytes = [UInt8]
+typealias Bytes = [Byte]
 
 class Buffer {
     
@@ -47,7 +47,7 @@ class Buffer {
             index += 1
             length -= 1
             
-            if byte == iOK {
+            if byte == 0x00 {
                 break
             }
             result.append(byte)
@@ -80,19 +80,6 @@ extension Array where Iterator.Element == Byte {
         let u4 = UInt32(self[3]) << 24
 
         return u4 | u3 | u2 | u1
-    }
-    
-    mutating func appendLengthEncodedInteger(n: UInt64) {
-        switch n {
-        case n where n <= 250:
-            append(Byte(n))
-        case n where n <= 0xffff:
-            append(contentsOf: [0xfc, Byte(n), Byte(n >> 8)])
-        case n where n <= 0xffffff:
-            append(contentsOf: [0xfd, Byte(n), Byte(n >> 8), Byte(n >> 16)])
-        default:
-            append(contentsOf: [0xfe, Byte(n), Byte(n >> 8), Byte(n >> 16), Byte(n >> 24), Byte(n >> 32), Byte(n >> 40), Byte(n >> 48), Byte(n >> 56)])
-        }
     }
     
     static func uInt24Array(_ val: UInt32) -> Bytes {

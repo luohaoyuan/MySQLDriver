@@ -101,9 +101,9 @@ extension Handshake {
 
         /// TODO: tls support
         
-        let authResp = auth(scramble: scramble, password: config.password, plugin: plugin)
-        var authRespLEI = Bytes()
-        authRespLEI.appendLengthEncodedInteger(n: UInt64(authResp.count))
+        let authResp = Auth.auth(scramble: scramble, password: config.password, plugin: plugin)
+        let authRespLEI = appendLengthEncodedInteger(n: UInt64(authResp.count))
+
         if authRespLEI.count > 1 {
             clientFlags |= ClientFlag.pluginAuthLenEncClientData.rawValue
         }
@@ -144,18 +144,5 @@ extension Handshake {
         bytes.append(0)
         
         return bytes
-    }
-    
-    func auth(scramble: Bytes, password: String?, plugin: String) -> Bytes {
-        guard let password = password else {
-            return []
-        }
-        switch plugin {
-        case defaultAuthPlugin:
-            return scramblePassword(scramble: scramble, password: password)
-        default:
-            // TODO: more plugins support
-            return []
-        }
     }
 }

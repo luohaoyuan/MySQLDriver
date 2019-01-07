@@ -7,12 +7,17 @@
 
 import Foundation
 
-let iOK = 0x00
-let iERR = 0xff
-
 let minProtocolVersion = 10
 
 let defaultAuthPlugin = "mysql_native_password"
+
+enum ResultHeader: Byte {
+    case ok = 0x00
+    case authMoreData = 0x01
+    case localInFile = 0xfb
+    case eof = 0xfe
+    case err = 0xff
+}
 
 enum ClientFlag: UInt32 {
     case longPassword = 0x00000001
