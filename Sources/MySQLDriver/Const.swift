@@ -9,8 +9,6 @@ import Foundation
 
 let minProtocolVersion = 10
 
-let defaultAuthPlugin = "mysql_native_password"
-
 enum ResultHeader: Byte {
     case ok = 0x00
     case authMoreData = 0x01

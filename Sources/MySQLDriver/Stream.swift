@@ -44,3 +44,78 @@ class Stream {
         sequence = 0
     }
 }
+
+extension Stream {
+    func readHandshake() throws -> Handshake {
+        let payload = try read()
+        return try Handshake(payload: payload.payload)
+    }
+    
+    func writeHandshake(_ handshake: Handshake) throws {
+        let authPayload = handshake.authPayload(config: config)
+        try write(payload: authPayload)
+    }
+    
+    func handleAuth(scramble: Bytes, plugin: AuthPlugin, password: String?) throws {
+        let res = try readAuthResult()
+        
+        var scramble = scramble
+        var plugin = plugin
+        
+        if let newPlugin = res.plugin {
+            plugin = newPlugin
+            
+            if let payload = res.payload {
+                scramble = payload
+            }
+            
+            let authResp = Auth.auth(scramble: scramble, password: password, plugin: plugin)
+            try write(payload: authResp)
+            
+            _ = try readAuthResult()
+        }
+        
+        switch plugin {
+        case .cachingSHA2:
+            // TODO: not support currently
+            break
+        case .sha256:
+            // TODO: not support currently
+            break
+        default:
+            return
+        }
+    }
+    
+    func readAuthResult() throws -> (payload: Bytes?, plugin: AuthPlugin?) {
+        let authResPayload = try read().payload
+        guard authResPayload.count > 0 else {
+            throw Err.ErrInvalidResponse
+        }
+        
+        switch authResPayload[0] {
+        case ResultHeader.ok.rawValue:
+            print("ok")
+            return (nil, nil)
+            
+        case ResultHeader.authMoreData.rawValue:
+            let authMoreBytes = Bytes(authResPayload[1..<authResPayload.count])
+            return (authMoreBytes, nil)
+            
+        case ResultHeader.eof.rawValue:
+            if authResPayload.count == 1 {
+                return (nil, .old)
+            }
+            let buffer = Buffer(bytes: authResPayload)
+            
+            // FIXME: if no 0x00 existed, maybe crash?
+            let pluginStr = buffer.readNextNullTerminatedBytes().string()
+            let plugin = AuthPlugin(rawValue: pluginStr)!
+            let authData = buffer.readRest()
+            return (authData, plugin)
+            
+        default:
+            throw Err.ErrMalformPkt
+        }
+    }
+}

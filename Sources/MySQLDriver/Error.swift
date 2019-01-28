@@ -8,9 +8,12 @@
 import Foundation
 
 enum Err: Error {
+    case ErrNotSupport
     case ErrInvalidConn
     case ErrInvalidResponse
     case ErrOldProtocol
     case ErrInvalidProtoVersion
     case ErrInvalidHandshake
+    case ErrMalformPkt
+    case ErrMySQL(code: Int, message: String)
 }

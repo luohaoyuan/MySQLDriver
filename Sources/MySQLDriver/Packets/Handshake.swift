@@ -36,7 +36,7 @@ struct Handshake {
     let flagsHigh: UInt32
     
     /// name of the auth_method that the auth_plugin_data belongs to
-    let plugin: String
+    let plugin: AuthPlugin
     
     init(payload: Bytes) throws {
         let buffer = Buffer(bytes: payload)
@@ -74,9 +74,13 @@ struct Handshake {
         
         let scramble2 = buffer.readNextNullTerminatedBytes()
         scramble.append(contentsOf: scramble2)
-        self.scramble = scramble2
+        self.scramble = scramble
 
-        self.plugin = buffer.readNextNullTerminatedBytes().string()
+        let pluginStr = buffer.readNextNullTerminatedBytes().string()
+        guard let plugin = AuthPlugin(rawValue: pluginStr) else {
+            throw Err.ErrNotSupport
+        }
+        self.plugin = plugin
     }
 }
 
@@ -140,7 +144,7 @@ extension Handshake {
         }
         bytes.append(0)
         
-        bytes.append(contentsOf: plugin.utf8)
+        bytes.append(contentsOf: plugin.rawValue.utf8)
         bytes.append(0)
         
         return bytes

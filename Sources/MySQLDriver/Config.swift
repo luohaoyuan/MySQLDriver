@@ -18,7 +18,15 @@ struct Config {
     let multiStatements: Bool
     let collation: Collation
     
-    init(username: String, password: String?, address: String, port: Int32 = 3306, dbName: String? = nil, collation: Collation = Collation.utf8_general_ci, clientFoundRows: Bool = false, multiStatements: Bool = false) {
+    init(username: String,
+         password: String?,
+         address: String,
+         port: Int32 = 3306,
+         dbName: String? = nil,
+         collation: Collation = Collation.utf8_general_ci,
+         clientFoundRows: Bool = false,
+         multiStatements: Bool = false
+        ) {
         self.username = username
         self.password = password
         self.address = address

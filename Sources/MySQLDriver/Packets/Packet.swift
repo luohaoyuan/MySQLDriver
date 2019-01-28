@@ -53,9 +53,3 @@ struct Packet {
         return Data(bytes)
     }
 }
-
-extension Packet {
-    public func handshake() throws -> Handshake {
-        return try Handshake(payload: payload)
-    }
-}

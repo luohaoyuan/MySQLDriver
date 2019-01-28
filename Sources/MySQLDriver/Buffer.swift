@@ -39,6 +39,10 @@ class Buffer {
         return readNext(need: 1)[0]
     }
     
+    public func readRest() -> Bytes {
+        return readNext(need: length)
+    }
+    
     public func readNextNullTerminatedBytes() -> Bytes {
         var result = Bytes()
         

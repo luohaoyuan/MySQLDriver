@@ -8,13 +8,20 @@
 import Foundation
 import CryptoSwift
 
+enum AuthPlugin: String {
+    case old = "mysql_old_password"
+    case sha256 = "sha256_password"
+    case native = "mysql_native_password"
+    case cachingSHA2 = "caching_sha2_password"
+}
+
 final class Auth {
-    static func auth(scramble: Bytes, password: String?, plugin: String) -> Bytes {
+    static func auth(scramble: Bytes, password: String?, plugin: AuthPlugin) -> Bytes {
         guard let password = password else {
             return []
         }
         switch plugin {
-        case defaultAuthPlugin:
+        case .native:
             return scramblePassword(scramble: scramble, password: password)
         default:
             // TODO: more plugins support
